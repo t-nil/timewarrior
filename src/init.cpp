@@ -128,7 +128,7 @@ void initializeEntities (CLI& cli)
 
 ////////////////////////////////////////////////////////////////////////////////
 void initializeDataJournalAndRules (
-  const CLI& cli,
+  CLI& cli,
   Database& database,
   Journal& journal,
   Rules& rules)
@@ -146,11 +146,31 @@ void initializeDataJournalAndRules (
   {
     if (arg.hasTag ("HINT"))
     {
-      if (arg.attribute ("canonical") == ":debug")   rules.set ("debug",        "on");
-      if (arg.attribute ("canonical") == ":quiet")   rules.set ("verbose",      "off");
-      if (arg.attribute ("canonical") == ":color")   rules.set ("color",        "on");
-      if (arg.attribute ("canonical") == ":nocolor") rules.set ("color",        "off");
-      if (arg.attribute ("canonical") == ":yes")     rules.set ("confirmation", "off");
+      if (arg.attribute ("canonical") == ":debug")
+      {
+        rules.set ("debug", "on");
+        arg.setConsumed ();
+      }
+      if (arg.attribute ("canonical") == ":quiet")
+      {
+        rules.set ("verbose", "off");
+        arg.setConsumed ();
+      }
+      if (arg.attribute ("canonical") == ":color")
+      {
+        rules.set ("color", "on");
+        arg.setConsumed ();
+      }
+      if (arg.attribute ("canonical") == ":nocolor")
+      {
+        rules.set ("color", "off");
+        arg.setConsumed ();
+      }
+      if (arg.attribute ("canonical") == ":yes")
+      {
+        rules.set("confirmation", "off");
+        arg.setConsumed ();
+      }
     }
   }
 
@@ -158,10 +178,14 @@ void initializeDataJournalAndRules (
   paths::initializeDirs (cli, rules);
 
   if (rules.has ("debug.indicator"))
+  {
     setDebugIndicator (rules.get ("debug.indicator"));
+  }
 
   if (rules.has ("theme.colors.debug"))
+  {
     setDebugColor (Color (rules.get ("theme.colors.debug")));
+  }
 
   // Apply command line overrides.
   for (auto& arg : cli._args)
@@ -170,6 +194,7 @@ void initializeDataJournalAndRules (
     {
       rules.set (arg.attribute ("name"), arg.attribute ("value"));
       debug (format ("Configuration override {1} = {2}", arg.attribute ("name"), arg.attribute ("value")));
+      arg.setConsumed ();
     }
   }
 
@@ -191,11 +216,15 @@ void initializeExtensions (
 
   // Add extensions as CLI entities.
   for (auto& ext : extensions.all ())
+  {
     cli.entity ("extension", File (ext).name ());
+  }
 
   // Extensions have a debug mode.
   if (rules.getBoolean ("debug"))
+  {
     extensions.debug ();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
