@@ -32,6 +32,8 @@
 #include <utf8.h>
 #include <utility>
 
+#include <vector>
+
 ////////////////////////////////////////////////////////////////////////////////
 SummaryTable::Builder SummaryTable::builder ()
 {
@@ -235,8 +237,18 @@ Table SummaryTable::Builder::build ()
 
       if (_show_tags)
       {
-        auto tags_string = join (", ", track.tags ());
-        table.set (row, tags_col_index, tags_string, summaryIntervalColor (_color_tags, track.tags ()));
+        auto tags = track.tags();
+
+        if (!_show_ids)
+        {
+            decltype(tags) cleaned_tags;
+            std::copy_if(begin(tags), end(tags), std::inserter(cleaned_tags, cleaned_tags.end()),
+                [](const std::string &tag){ return tag.length() <= 2 || ! (tag.at(0) == '{' && tag.at(tag.length()-1) == '}'); }
+            );
+            tags = cleaned_tags;
+        }
+        auto tags_string = join (", ", tags);
+        table.set (row, tags_col_index, tags_string, summaryIntervalColor (_color_tags, tags));
       }
 
       if (_show_annotations)
