@@ -45,10 +45,14 @@ except AttributeError:
 
 def extract_tags_from(json_obj):
     # Extract attributes for use as tags.
-    tags = [json_obj['description']]
+    tags = ["$" + json_obj['description'],
+            "{" + json_obj['uuid'] + "}"]
 
     if 'project' in json_obj:
-        tags.append(json_obj['project'])
+        tags.append("%p:" + json_obj['project'])
+
+    if 'area' in json_obj:
+        tags.append("%a:" + json_obj['area'])
 
     if 'tags' in json_obj:
         if type(json_obj['tags']) is str:
@@ -84,6 +88,22 @@ def main(old, new):
 
     if start_or_stop:
         tags = extract_tags_from(new)
+
+        if start_or_stop == 'start':
+            num_active = subprocess.run(['task', '+ACTIVE', 'status:pending', 'count', 'rc.verbose:off', 'rc.gc:0', 'rc.hooks:0'], capture_output=True).stdout
+            if int(num_active) != 0:
+                print("ERROR: another task is currently active. End it first. (use `task +ACTIVE` to show)", file=sys.stderr)
+                sys.exit(1)
+
+            new_tags = extract_tags_from(new)
+
+            timew_output = subprocess.run(['timew', 'export', '{' + new['uuid'] + '}'], capture_output=True).stdout
+            old_intervals = json.loads(timew_output)
+            for interval in old_intervals:
+                old_tags = interval['tags']
+                if old_tags != new_tags:
+                    subprocess.call(['timew', 'untag', '@' + str(interval['id'])] + old_tags + [':yes'])
+                    subprocess.call(['timew', 'tag', '@' + str(interval['id'])] + new_tags + [':yes'])
 
         subprocess.call(['timew', start_or_stop] + tags + [':yes'])
 
