@@ -478,6 +478,10 @@ void Chart::renderInterval (
 
     for (auto& tag : track.tags ())
     {
+      // SKIP UUIDs or stuff like {…}
+      if (tag.length() > 2 && tag.at(0) == '{' && tag.at(tag.length()-1) == '}')
+        continue;
+
       if (! label.empty ())
       {
         label += ' ';
